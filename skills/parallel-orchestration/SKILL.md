@@ -1,6 +1,6 @@
 ---
 name: parallel-orchestration
-description: Orchestrate work with parallel subagents when a task splits into independent pieces. Use for multiple independent code changes, mirrored or bulk edits across files or entities, multi-part research or codebase exploration, or reviewing a change along several dimensions, even if the user doesn't mention agents or parallelism. Also use when deciding whether to split a task at all. Not for small tasks, sequential steps, or answering a question.
+description: Orchestrate work with subagents when a task splits into independent pieces, or when one noisy step would flood the main context. Use for multiple independent code changes, mirrored or bulk edits across files or entities, multi-part research or codebase exploration, or reviewing a change along several dimensions, even if the user doesn't mention agents or parallelism. Also use when deciding whether to split a task at all. Not for small tasks, sequential steps, or answering a question.
 ---
 
 # Parallel orchestration
@@ -24,6 +24,8 @@ Split the task when you can name two or more units of work where neither needs t
 - Reviewing a change along different dimensions (correctness, security, tests, docs)
 - Independent verification steps (lint one package while testing another)
 
+**One unit is enough when the work is noisy.** Delegation buys two things: wall-clock time, which needs two or more independent units, and a clean main context, which needs only one. An agent that reads thirty files and hands back a path list earns its spawn. The test is the ratio, lots of input, little output. If the unit has to return most of what it read, you've saved nothing and added a round trip.
+
 When in doubt, spend a moment decomposing before starting work: list the units, mark the dependencies. If the dependency graph has parallel branches, orchestrate them.
 
 ## When NOT to parallelize
@@ -31,7 +33,7 @@ When in doubt, spend a moment decomposing before starting work: list the units, 
 Don't force it. Work solo when:
 
 - The task is small, a couple of files, a few minutes of work. Agent overhead would exceed the work itself.
-- Steps are genuinely sequential (each needs the previous result).
+- Steps are genuinely sequential (each needs the previous result), though a single noisy step can still go to one agent.
 - The work needs full conversational context that's expensive to restate in a prompt.
 - The task is a conversation, a question, or a judgment call. The user wants *your* answer.
 
