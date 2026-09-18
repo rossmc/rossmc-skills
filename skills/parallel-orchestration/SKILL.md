@@ -1,6 +1,6 @@
 ---
 name: parallel-orchestration
-description: Orchestrate work with parallel subagents whenever a task decomposes into independent pieces. Use this whenever a task involves multiple independent code changes, edits across several files or entities, bulk/mirrored edits, multi-part research or codebase exploration, reviewing something from several angles, or any work where two or more steps don't depend on each other's output — even if the user doesn't mention agents or parallelism. Also use it when deciding whether a task should be split at all.
+description: Orchestrate work with parallel subagents when a task splits into independent pieces. Use for multiple independent code changes, mirrored or bulk edits across files or entities, multi-part research or codebase exploration, or reviewing a change along several dimensions, even if the user doesn't mention agents or parallelism. Also use when deciding whether to split a task at all. Not for small tasks, sequential steps, or answering a question.
 ---
 
 # Parallel orchestration
@@ -30,10 +30,10 @@ When in doubt, spend a moment decomposing before starting work: list the units, 
 
 Don't force it. Work solo when:
 
-- The task is small — a couple of files, a few minutes of work. Agent overhead would exceed the work itself.
+- The task is small, a couple of files, a few minutes of work. Agent overhead would exceed the work itself.
 - Steps are genuinely sequential (each needs the previous result).
 - The work needs full conversational context that's expensive to restate in a prompt.
-- The task is a conversation, a question, or a judgment call — the user wants *your* answer.
+- The task is a conversation, a question, or a judgment call. The user wants *your* answer.
 
 ## Model
 
@@ -50,19 +50,30 @@ Say which model the agents ran on when relaying outcomes.
 ## How to do it well
 
 1. **Decompose first, then dispatch.** Decide the exact split, contracts, and file ownership *before* spawning anything.
-2. **Disjoint file sets.** Each agent gets files no other agent touches, so writes never collide. Shared files (central config, registries, barrel files, `di.xml`-style wiring) get a single owner — usually the main session, edited after the agents return.
-3. **Specify contracts up front.** Exact names, signatures, interfaces, and conventions go into each agent's prompt, so parallel work stays mutually consistent. Agents can't see each other's output — anything they must agree on, you must state.
+2. **Disjoint file sets.** Each agent gets files no other agent touches, so writes never collide. Shared files (central config, registries, barrel files, `di.xml`-style wiring) get a single owner, usually the main session, edited after the agents return.
+3. **Specify contracts up front.** Exact names, signatures, interfaces, and conventions go into each agent's prompt, so parallel work stays mutually consistent. Agents can't see each other's output, so anything they must agree on, you must state.
 4. **Launch concurrently.** Send all independent Agent calls in a single message so they actually run in parallel. Spawning them one turn at a time serializes the work you meant to parallelize.
-5. **Match agent type to work, and set the model.** Read-only exploration → Explore agents; edits and multi-step tasks → general-purpose. Both with `model` set per the Model section above. Never fork.
+5. **Match agent type to work.** Read-only exploration goes to Explore agents, edits and multi-step tasks to general-purpose. Model choice is covered above.
 6. **Prompt each agent as if it knows nothing.** It has no conversation history. Include the goal, the exact files, the contract, what to return, and what *not* to touch.
-7. **Verify the combined result yourself.** After agents return, the main session integrates: edit the shared files, then lint/compile/test the whole. Agents verify their own piece; only you can verify the composition.
-8. **Relay outcomes.** Agent reports aren't shown to the user — summarize what each accomplished and the combined verification result.
+7. **Bound what comes back.** Give every agent a return budget and a shape: at most 15 lines covering files changed, decisions made, and anything that blocked it. Agents default to long reports, and every line lands in your context, which is the thing you were protecting. Past about ten agents, run waves and carry a short written state between them rather than letting each wave's reports accumulate.
+8. **Verify the combined result yourself.** After agents return, the main session integrates: edit the shared files, then lint/compile/test the whole. Agents verify their own piece, only you can verify the composition.
+9. **Relay outcomes.** Agent reports aren't shown to the user, so summarize what each accomplished and the combined verification result.
+
+## When an agent fails
+
+Pick the policy per unit before dispatching, and state it in the prompt:
+
+- **Retry** once, when the unit is well specified and the failure looks transient. Respawn with the failure noted.
+- **Skip**, when the unit is genuinely independent. Take the rest, and say in your summary what didn't land.
+- **Abort**, when later work depends on it, or when a partial result is worse than none. Half a rename, half a migration.
+
+The failure that bites is the quiet one, an agent reporting success having done two thirds of the job. That's why you verify the composition yourself rather than trusting the reports.
 
 ## Example
 
 Task: "Add a `deleted_at` timestamp to the Order, Invoice, and Shipment entities, with matching repository filters and test coverage."
 
-- Decompose: three entities, identical pattern, disjoint files — plus one shared migration/config file.
+- Decompose: three entities, identical pattern, disjoint files, plus one shared migration/config file.
 - Contract in each prompt: column name `deleted_at`, nullable datetime, filter method `excludeDeleted()`, test naming convention.
 - Spawn three agents in one message, one per entity (files + tests for that entity only).
 - Main session: edits the shared schema/wiring file, then runs the full test suite and reports results.
