@@ -37,7 +37,9 @@ Don't force it. Work solo when:
 
 ## Model
 
-Always pass `model` explicitly on every Agent call. Pick the most efficient model that can do the unit well:
+Set the model explicitly on every spawn. Harnesses inherit the orchestrator's model when you don't, which makes cheap units expensive and, on a weak orchestrator, makes every unit weak. Pick the cheapest model that can do the unit well, and never use a delegation mode that ignores the choice.
+
+**Claude Code**, on every Agent call:
 
 - `sonnet` by default: searches, reviews against a stated checklist, mirrored edits, anything with a clear contract.
 - `opus` only when the unit needs sustained reasoning a cheaper model would get wrong: subtle correctness tracing across many files, design judgement, an ambiguous spec.
@@ -45,7 +47,9 @@ Always pass `model` explicitly on every Agent call. Pick the most efficient mode
 - Never Haiku.
 - Never `subagent_type: "fork"`. A fork ignores the `model` override and inherits the parent model, so on a Fable session every fork is a Fable agent. Skills that fork in the background (`code-review` does) have the same problem, so fold their dimensions into your own agents instead of launching them. If a unit needs the current conversation context, restate that context in the prompt.
 
-Say which model the agents ran on when relaying outcomes.
+**Codex**: resolution runs the explicit spawn value, then the `[agents]` default, then the parent's, so omitting it inherits.
+
+Say which model the agents ran on when relaying outcomes, and if you can't tell what one will run on, say that rather than assuming.
 
 ## How to do it well
 
@@ -53,7 +57,7 @@ Say which model the agents ran on when relaying outcomes.
 2. **Disjoint file sets.** Each agent gets files no other agent touches, so writes never collide. Shared files (central config, registries, barrel files, `di.xml`-style wiring) get a single owner, usually the main session, edited after the agents return.
 3. **Specify contracts up front.** Exact names, signatures, interfaces, and conventions go into each agent's prompt, so parallel work stays mutually consistent. Agents can't see each other's output, so anything they must agree on, you must state.
 4. **Launch concurrently.** Send all independent Agent calls in a single message so they actually run in parallel. Spawning them one turn at a time serializes the work you meant to parallelize.
-5. **Match agent type to work.** Read-only exploration goes to Explore agents, edits and multi-step tasks to general-purpose. Model choice is covered above.
+5. **Match agent type to work.** Read-only exploration goes to a read-only agent (Claude Code `Explore`, Codex `explorer`), edits and multi-step tasks to a general-purpose one (`general-purpose`, `worker`). Model choice is covered above.
 6. **Prompt each agent as if it knows nothing.** It has no conversation history. Include the goal, the exact files, the contract, what to return, and what *not* to touch.
 7. **Bound what comes back.** Give every agent a return budget and a shape: at most 15 lines covering files changed, decisions made, and anything that blocked it. Agents default to long reports, and every line lands in your context, which is the thing you were protecting. Past about ten agents, run waves and carry a short written state between them rather than letting each wave's reports accumulate.
 8. **Verify the combined result yourself.** After agents return, the main session integrates: edit the shared files, then lint/compile/test the whole. Agents verify their own piece, only you can verify the composition.

@@ -2,6 +2,15 @@
 
 A collection of custom skills for LLM-powered agents.
 
+Skills follow the [Agent Skills open standard](https://agentskills.io), so one copy
+works across harnesses. Claude Code and Codex both read the same `SKILL.md`, they just
+look in different places:
+
+| Harness | User scope | Project scope |
+|---|---|---|
+| Claude Code | `~/.claude/skills` | `.claude/skills` |
+| Codex | `~/.agents/skills` | `.agents/skills` |
+
 ## Skills
 
 | Skill | What it does |
@@ -10,26 +19,28 @@ A collection of custom skills for LLM-powered agents.
 
 ## Install
 
-Claude Code loads skills from `~/.claude/skills`. Clone the repo somewhere permanent,
-then run the installer:
+Clone the repo somewhere permanent, then run the installer:
 
 ```bash
 git clone <repo-url> ~/Projects/rossmc-skills
 ~/Projects/rossmc-skills/install.sh
 ```
 
-That symlinks every skill in `skills/` into `~/.claude/skills`. Re-run it whenever the
-repo grows, it adds new skills and refreshes existing links. Set `CLAUDE_SKILLS_DIR` to
-install somewhere else.
+That symlinks every skill in `skills/` into each harness it finds on the machine. It
+only installs for a harness that already exists, so it won't conjure a `~/.agents`
+on a box that has never run Codex. Force one with `--claude` or `--codex`, and
+override the destinations with `CLAUDE_SKILLS_DIR` and `CODEX_SKILLS_DIR`.
 
-Symlink rather than copy. A copy goes stale the moment either side changes and you end up
-editing one while loading the other. With a link, `git pull` updates the skill in place
-with no reinstall step.
+Re-run it whenever the repo grows. New skills are added, existing links refreshed.
 
-Start a new session to pick up a newly linked skill. Skills are read at session start, so
-an already-running session won't see it.
+Symlink rather than copy. A copy goes stale the moment either side changes and you end
+up editing one while loading the other. With a link, `git pull` updates the skill in
+place with no reinstall step.
 
-### Linking one skill by hand
+Start a new session to pick up a newly linked skill. Skills are read at session start,
+so an already-running session won't see it.
+
+### Linking by hand
 
 ```bash
 ln -s ~/Projects/rossmc-skills/skills/parallel-orchestration ~/.claude/skills/parallel-orchestration
@@ -45,7 +56,10 @@ ln -s ~/Projects/rossmc-skills/skills/* ~/.claude/skills/
 **Careful with `ln -sfn` if a real directory is already sitting at the target.** It does
 not replace the directory. It creates the link *inside* it, prints nothing, and exits 0,
 so the skill quietly never loads. Delete the directory first. `install.sh` detects this
-case and tells you rather than making the mess.
+case and reports it rather than making the mess.
+
+Codex doesn't merge skills that share a `name`, both show up in the picker, so watch for
+a clash if you already keep skills in `~/.agents/skills` from elsewhere.
 
 ### Project-scoped install
 
@@ -57,7 +71,8 @@ mkdir -p .claude/skills
 ln -s ~/Projects/rossmc-skills/skills/parallel-orchestration .claude/skills/parallel-orchestration
 ```
 
-Add `.claude/skills/` to that repo's `.gitignore` if the link is just for you.
+Use `.agents/skills` for the same thing under Codex. Add the directory to that repo's
+`.gitignore` if the link is just for you.
 
 ### Verify
 
@@ -75,7 +90,7 @@ A broken symlink shows in red under `ls` and the skill silently won't load. Clau
 skills/
 └── <skill-name>/
     └── SKILL.md        # frontmatter (name, description) + instructions
-install.sh              # symlinks every skill into ~/.claude/skills
+install.sh              # symlinks every skill into each harness found
 ```
 
 `SKILL.md` frontmatter needs a `name` and a `description`. The description is the whole
