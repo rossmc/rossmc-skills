@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+._*
+
+# Editors
+.idea/
+.vscode/
+.zed/
+*.swp
+*~
+
+# skill-creator eval runs. Written as <skill-name>-workspace/ beside the skill,
+# holds iteration outputs, transcripts and benchmarks. Bulky and machine local.
+# Note this does not cover evals/evals.json inside a skill, which is worth keeping.
+*-workspace/
+feedback.json
+
+# Secrets. A skill should never carry credentials.
+.env
+.env.*
+*.local
+
+# Agent tooling that writes into a repo it is run in
+.claude/settings.local.json
+
+# Script artifacts, for skills that bundle scripts/
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
