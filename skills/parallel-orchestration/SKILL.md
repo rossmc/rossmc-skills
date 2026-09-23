@@ -43,9 +43,9 @@ Set the model explicitly on every spawn. Harnesses inherit the orchestrator's mo
 
 **Claude Code**, on every Agent call:
 
-- `sonnet` by default: searches, reviews against a stated checklist, mirrored edits, anything with a clear contract.
-- `opus` only when the unit needs sustained reasoning a cheaper model would get wrong: subtle correctness tracing across many files, design judgement, an ambiguous spec.
-- Never Fable. The main session may run on it, delegated work must not.
+- `sonnet`: searches, checklist reviews, mirrored or bulk edits, running lint/tests and reporting failures, anything with a mechanical contract.
+- `opus` (Opus 5.5): implementing a ticket or unit that needs judgement, cross-file correctness tracing, fixing failures a verify pass found, design-sensitive edits. The default for implementation work that isn't purely mechanical.
+- Never Fable for delegated work. The main session plans, writes contracts, integrates shared files, and makes final calls.
 - Never Haiku.
 - Never `subagent_type: "fork"`. A fork ignores the `model` override and inherits the parent model, so on a Fable session every fork is a Fable agent. Skills that fork in the background (`code-review` does) have the same problem, so fold their dimensions into your own agents. If a unit needs the current conversation context, restate it in the prompt.
 
@@ -56,13 +56,13 @@ Say which model the agents ran on when relaying outcomes. If you can't tell, say
 ## How to do it well
 
 1. **Decompose first, then dispatch.** Decide the exact split, contracts, and file ownership *before* spawning anything.
-2. **Disjoint file sets.** Each agent gets files no other agent touches, so writes never collide. Shared files (central config, registries, wiring) get a single owner, usually the main session, edited after the agents return.
+2. **Disjoint file sets.** Each agent gets files no other agent touches, so writes never collide. Shared files (central config, registries, wiring) get a single owner, usually the main session, edited after the agents return. When the split is hard to keep perfectly disjoint, give editing agents their own copy of the repo (Claude Code `isolation: "worktree"`).
 3. **Specify contracts up front.** Exact names, signatures, interfaces, and conventions go into each agent's prompt. Agents can't see each other's output, so anything they must agree on, you must state.
 4. **Launch concurrently.** Send all independent Agent calls in a single message. One per turn serializes the work you meant to parallelize.
 5. **Match agent type to work.** Read-only exploration goes to a read-only agent (Claude Code `Explore`, Codex `explorer`), edits and multi-step tasks to a general-purpose one (`general-purpose`, `worker`).
 6. **Prompt each agent as if it knows nothing.** It has no conversation history. Include the goal, the exact files, the contract, what to return, and what *not* to touch.
 7. **Bound what comes back.** Give every agent a return budget and shape: at most 15 lines covering files changed, decisions made, anything that blocked it. Agents default to long reports and every line lands in your context. Past about ten agents, run waves and carry a short written state between them.
-8. **Verify the combined result yourself.** Edit the shared files, then lint/compile/test the whole. Agents verify their own piece, only you can verify the composition.
+8. **Verify the combined result yourself.** Edit the shared files, then lint/compile/test the whole. Agents verify their own piece, only you can verify the composition. Delegate the verification run (phpcs, PHPUnit, Playwright) to a `sonnet` agent that returns only failures, the main session decides the fixes.
 9. **Relay outcomes.** Agent reports aren't shown to the user, so summarize what each accomplished and the combined verification result.
 
 ## When an agent fails
