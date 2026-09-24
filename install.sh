@@ -51,6 +51,9 @@ for dest in "${targets[@]}"; do
     for src in "$repo_skills"/*/; do
         src="${src%/}"
         [ -d "$src" ] || continue
+        # Only real skills. skill-creator drops a <name>-workspace/ of eval runs beside
+        # the skill, and nothing without a SKILL.md should be linked into a harness.
+        [ -f "$src/SKILL.md" ] || continue
         name="$(basename "$src")"
         target="$dest/$name"
 
