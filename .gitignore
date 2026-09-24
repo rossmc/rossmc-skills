@@ -29,3 +29,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Playwright MCP snapshots and screenshots, written under the cwd of the session that drove it
+.playwright-mcp/

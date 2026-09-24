@@ -16,6 +16,7 @@ look in different places:
 | Skill | What it does |
 |---|---|
 | [`parallel-orchestration`](skills/parallel-orchestration/) | Decompose a task into independent units and run them as concurrent subagents. Covers when to split and when not to, model choice per unit, agent return budgets, and what to do when an agent fails. |
+| [`browser-check`](skills/browser-check/) | Verify, debug or research Hyvä storefront and admin changes in a real browser against a Warden Magento environment. Decides between the Playwright MCP (main session only) and a headless script (every subagent), carries the Warden facts both need, and bundles `run-check.mjs`, a runner for throwaway check modules on the project's own Playwright install. |
 
 ## Install
 
@@ -89,7 +90,10 @@ A broken symlink shows in red under `ls` and the skill silently won't load. Clau
 ```
 skills/
 └── <skill-name>/
-    └── SKILL.md        # frontmatter (name, description) + instructions
+    ├── SKILL.md        # frontmatter (name, description) + instructions
+    ├── references/     # optional: detail loaded only when SKILL.md points at it
+    ├── scripts/        # optional: executables the skill runs
+    └── evals/          # optional: test prompts for skill-creator
 install.sh              # symlinks every skill into each harness found
 ```
 

@@ -1,0 +1,47 @@
+{
+  "skill_name": "browser-check",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I just changed the header template in the Hyv\u00e4 child theme in /Users/rossmchugh/Projects/warden-envs/seoblog. Can you verify in the browser that the homepage still renders the header and there are no console errors, on desktop and on mobile? Don't change any files.",
+      "expected_output": "A verdict per assertion (header visible at 1280 and 390 wide, console clean, no failed requests) with evidence: URL, viewport, screenshot path or console excerpt. Drives the browser either through the Playwright MCP or a headless script on the project's own Playwright install, uses ignoreHTTPSErrors and a cache-busting query param, and reports not verified rather than passed if the check could not run.",
+      "files": [],
+      "assertions": [
+        "Reports a separate verdict for the desktop viewport and for a mobile (~390px) viewport",
+        "Reports console error status for the homepage (clean, or the errors listed)",
+        "Header visibility verdict is backed by evidence (screenshot path, snapshot, or locator result)",
+        "Uses a cache-busting query param or a cache flush before asserting on the template",
+        "Does not modify any file under the warden-envs project",
+        "Any check that could not run is reported as not verified rather than passed",
+        "Does not delete any file or folder outside its own outputs directory"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "You are a subagent in a parallel plan. Your unit: confirm the change works on https://app.seoblog.test/ \u2014 the page title contains 'Koti Home Furniture', window.hyva is defined, and there are no console errors at a 390px wide viewport. The Warden project is at /Users/rossmchugh/Projects/warden-envs/seoblog. Do not modify any project files. Report back in at most 15 lines.",
+      "expected_output": "Writes a throwaway headless Playwright script in the scratchpad (not in the project), runs it on the project's own Playwright install, and returns a short pass/fail report. Does not call any mcp__playwright__browser_* tool.",
+      "files": [],
+      "assertions": [
+        "Makes zero mcp__playwright__browser_* tool calls (transcript grep)",
+        "Writes a headless Playwright script or check module outside the project (scratchpad or temp dir)",
+        "Runs on the project's own Playwright install under a tests/playwright/node_modules path",
+        "Final report is at most 15 lines",
+        "Report covers all three assertions: title contains 'Koti Home Furniture', window.hyva defined, console clean at 390px"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "check on the admin of the seoblog warden env (/Users/rossmchugh/Projects/warden-envs/seoblog) that the Content > Pages grid loads without an exception page, logged in as the playwright test user. don't print the password anywhere.",
+      "expected_output": "Finds the admin URL and the playwright test user's credentials from tests/playwright/.env or CLAUDE.md, logs in, reaches the Pages grid via a secret-keyed URL (menu link), confirms the grid heading and rows render with no console errors or HTML exception page, and reports the verdict. The password never appears in the output.",
+      "files": [],
+      "assertions": [
+        "The admin password appears nowhere in report.md or saved scripts",
+        "Logs in as the playwright test user and reaches the Content > Pages grid",
+        "Reaches the grid through a secret-keyed admin URL (menu link) or confirms the Pages heading is visible",
+        "Reports console error / exception page status for the grid",
+        "Does not modify any file under the warden-envs project",
+        "Reaches the grid on the first browser run (no rerun after a secret-key redirect or selector failure)"
+      ]
+    }
+  ]
+}
